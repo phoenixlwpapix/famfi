@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /d/my-apps/02-in-development/famfi/.claude/worktrees/reverent-ishizaka -type d -not -path */node_modules/* -not -path */.next/* -not -path */.git/*)",
+      "Bash(pnpm build:*)",
+      "Bash(grep export.*init node_modules/@instantdb/react/dist/index.d.mts)"
+    ]
+  }
+}
