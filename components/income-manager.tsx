@@ -30,15 +30,17 @@ export function IncomeManager() {
   const rates = useFamilyStore((s) => s.rates);
   const activeMemberId = useFamilyStore((s) => s.activeMemberId);
   const autoGenDone = useRef(false);
+  const { user } = db.useAuth();
+  const userId = user?.id ?? '';
 
   const { data, isLoading } = db.useQuery({
-    members: {},
-    incomes: {},
+    members: { $: { where: { userId } } },
+    incomes: { $: { where: { userId } } },
   });
 
   // Auto-generate recurring incomes for current month
   useEffect(() => {
-    if (!data || autoGenDone.current) return;
+    if (!data || !userId || autoGenDone.current) return;
     autoGenDone.current = true;
 
     const allIncomes = data.incomes || [];
@@ -70,6 +72,7 @@ export function IncomeManager() {
           recurring: false,
           dayOfMonth: 0,
           recurringSourceId: template.id,
+          userId: template.userId || userId,
         });
       });
 
@@ -160,6 +163,7 @@ export function IncomeManager() {
           recurring: true,
           dayOfMonth: form.dayOfMonth,
           recurringSourceId: '',
+          userId,
         }
       : {
           type: form.type,
@@ -171,6 +175,7 @@ export function IncomeManager() {
           recurring: false,
           dayOfMonth: 0,
           recurringSourceId: editingId ? (data?.incomes?.find(i => i.id === editingId)?.recurringSourceId || '') : '',
+          userId,
         };
 
     db.transact(

@@ -3,6 +3,7 @@ import { Outfit } from 'next/font/google';
 import './globals.css';
 import { Sidebar } from '@/components/sidebar';
 import { Providers } from '@/components/providers';
+import { AuthGate } from '@/components/auth-gate';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -24,12 +25,14 @@ export default function RootLayout({
     <html lang="zh-CN">
       <body className={outfit.variable}>
         <Providers>
-          <Sidebar />
-          <main className="lg:ml-60 min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-16 lg:pt-8">
-              {children}
-            </div>
-          </main>
+          <AuthGate>
+            <Sidebar />
+            <main className="lg:ml-60 min-h-screen">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-16 lg:pt-8">
+                {children}
+              </div>
+            </main>
+          </AuthGate>
         </Providers>
       </body>
     </html>

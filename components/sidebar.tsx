@@ -9,9 +9,11 @@ import {
   TrendingUp,
   Menu,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useFamilyStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/instant';
 
 const NAV_ITEMS = [
   { href: '/', label: '总览', icon: LayoutDashboard },
@@ -24,6 +26,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const sidebarOpen = useFamilyStore((s) => s.sidebarOpen);
   const toggleSidebar = useFamilyStore((s) => s.toggleSidebar);
+  const { user } = db.useAuth();
 
   return (
     <>
@@ -95,8 +98,26 @@ export function Sidebar() {
           })}
         </nav>
 
+        {/* User + Sign out */}
+        {user && (
+          <div className="px-4 py-3 border-t border-border">
+            <div className="flex items-center justify-between gap-2 px-2 py-2 rounded-md hover:bg-surface-elevated transition-colors group">
+              <div className="min-w-0">
+                <p className="text-xs text-foreground truncate">{user.email}</p>
+              </div>
+              <button
+                onClick={() => db.auth.signOut()}
+                title="退出登录"
+                className="flex-shrink-0 p-1.5 rounded-md text-foreground-secondary hover:text-danger transition-colors"
+              >
+                <LogOut size={14} />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-border">
+        <div className="px-6 py-3 border-t border-border">
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
             <p className="text-xs text-foreground-secondary">

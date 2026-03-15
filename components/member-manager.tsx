@@ -22,12 +22,14 @@ export function MemberManager() {
   const rates = useFamilyStore((s) => s.rates);
   const activeMemberId = useFamilyStore((s) => s.activeMemberId);
   const setActiveMember = useFamilyStore((s) => s.setActiveMember);
+  const { user } = db.useAuth();
+  const userId = user?.id ?? '';
 
   const { data, isLoading } = db.useQuery({
-    members: {},
-    deposits: {},
-    metals: {},
-    securities: {},
+    members: { $: { where: { userId } } },
+    deposits: { $: { where: { userId } } },
+    metals: { $: { where: { userId } } },
+    securities: { $: { where: { userId } } },
   });
 
   const members = data?.members || [];
@@ -87,7 +89,7 @@ export function MemberManager() {
     } else {
       const newId = id();
       db.transact(
-        db.tx.members[newId].update({ name: name.trim(), role, color, createdAt: Date.now() })
+        db.tx.members[newId].update({ name: name.trim(), role, color, createdAt: Date.now(), userId })
       );
     }
     setModalOpen(false);

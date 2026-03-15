@@ -28,13 +28,15 @@ export function Dashboard() {
   const rates = useFamilyStore((s) => s.rates);
   const ratesUpdatedAt = useFamilyStore((s) => s.ratesUpdatedAt);
   const metalPrices = useFamilyStore((s) => s.metalPrices);
+  const { user } = db.useAuth();
+  const userId = user?.id ?? '';
 
   const { data, isLoading } = db.useQuery({
-    members: {},
-    deposits: {},
-    metals: {},
-    securities: {},
-    incomes: {},
+    members: { $: { where: { userId } } },
+    deposits: { $: { where: { userId } } },
+    metals: { $: { where: { userId } } },
+    securities: { $: { where: { userId } } },
+    incomes: { $: { where: { userId } } },
   });
 
   const stats = useMemo(() => {

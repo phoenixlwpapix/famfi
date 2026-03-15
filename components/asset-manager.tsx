@@ -30,12 +30,14 @@ export function AssetManager() {
   const rates = useFamilyStore((s) => s.rates);
   const metalPrices = useFamilyStore((s) => s.metalPrices);
   const activeMemberId = useFamilyStore((s) => s.activeMemberId);
+  const { user } = db.useAuth();
+  const userId = user?.id ?? '';
 
   const { data, isLoading } = db.useQuery({
-    members: {},
-    deposits: {},
-    metals: {},
-    securities: {},
+    members: { $: { where: { userId } } },
+    deposits: { $: { where: { userId } } },
+    metals: { $: { where: { userId } } },
+    securities: { $: { where: { userId } } },
   });
 
   const members: { id: string; name: string; color: string }[] = data?.members || [];
@@ -110,13 +112,13 @@ export function AssetManager() {
       </div>
 
       {activeTab === 'deposits' && (
-        <DepositsTab members={members} rates={rates} activeMemberId={activeMemberId} />
+        <DepositsTab members={members} rates={rates} activeMemberId={activeMemberId} userId={userId} />
       )}
       {activeTab === 'metals' && (
-          <MetalsTab members={members} rates={rates} metalPrices={metalPrices} activeMemberId={activeMemberId} />
+        <MetalsTab members={members} rates={rates} metalPrices={metalPrices} activeMemberId={activeMemberId} userId={userId} />
       )}
       {activeTab === 'securities' && (
-        <SecuritiesTab members={members} rates={rates} activeMemberId={activeMemberId} />
+        <SecuritiesTab members={members} rates={rates} activeMemberId={activeMemberId} userId={userId} />
       )}
     </div>
   );
@@ -138,16 +140,18 @@ function DepositsTab({
   members,
   rates,
   activeMemberId,
+  userId,
 }: {
   members: { id: string; name: string; color: string }[];
   rates: Record<string, number>;
   activeMemberId: string | null;
+  userId: string;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(DEPOSIT_EMPTY);
 
-  const { data } = db.useQuery({ deposits: {} });
+  const { data } = db.useQuery({ deposits: { $: { where: { userId } } } });
   const deposits = useMemo(() => {
     const all = data?.deposits || [];
     return activeMemberId ? all.filter((d) => d.memberId === activeMemberId) : all;
@@ -185,6 +189,7 @@ function DepositsTab({
       endDate: form.endDate,
       bank: form.bank,
       memberId: form.memberId,
+      userId,
     };
     db.transact(
       editingId
@@ -325,17 +330,19 @@ function MetalsTab({
   rates,
   metalPrices,
   activeMemberId,
+  userId,
 }: {
   members: { id: string; name: string; color: string }[];
   rates: Record<string, number>;
   metalPrices: { gold: number; silver: number };
   activeMemberId: string | null;
+  userId: string;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(METAL_EMPTY);
 
-  const { data } = db.useQuery({ metals: {} });
+  const { data } = db.useQuery({ metals: { $: { where: { userId } } } });
   const metals = useMemo(() => {
     const all = data?.metals || [];
     return activeMemberId ? all.filter((m) => m.memberId === activeMemberId) : all;
@@ -385,6 +392,7 @@ function MetalsTab({
       currency: isAutoType(form.metalType) ? 'USD' : form.currency,
       purchaseDate: form.purchaseDate,
       memberId: form.memberId,
+      userId,
     };
     db.transact(
       editingId
@@ -575,16 +583,18 @@ function SecuritiesTab({
   members,
   rates,
   activeMemberId,
+  userId,
 }: {
   members: { id: string; name: string; color: string }[];
   rates: Record<string, number>;
   activeMemberId: string | null;
+  userId: string;
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(SECURITY_EMPTY);
 
-  const { data } = db.useQuery({ securities: {} });
+  const { data } = db.useQuery({ securities: { $: { where: { userId } } } });
   const securities = useMemo(() => {
     const all = data?.securities || [];
     return activeMemberId ? all.filter((s) => s.memberId === activeMemberId) : all;
@@ -624,6 +634,7 @@ function SecuritiesTab({
       currency: form.currency,
       purchaseDate: form.purchaseDate,
       memberId: form.memberId,
+      userId,
     };
     db.transact(
       editingId

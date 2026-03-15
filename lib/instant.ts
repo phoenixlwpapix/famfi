@@ -9,6 +9,7 @@ const schema = i.schema({
       role: i.string(),
       color: i.string(),
       createdAt: i.number(),
+      userId: i.string(),
     }),
     incomes: i.entity({
       type: i.string(),
@@ -20,6 +21,7 @@ const schema = i.schema({
       recurring: i.boolean(),
       dayOfMonth: i.number(),
       recurringSourceId: i.string(),
+      userId: i.string(),
     }),
     deposits: i.entity({
       type: i.string(),
@@ -30,6 +32,7 @@ const schema = i.schema({
       endDate: i.string(),
       bank: i.string(),
       memberId: i.string(),
+      userId: i.string(),
     }),
     metals: i.entity({
       metalType: i.string(),
@@ -39,6 +42,7 @@ const schema = i.schema({
       currentPrice: i.number(),
       purchaseDate: i.string(),
       memberId: i.string(),
+      userId: i.string(),
     }),
     securities: i.entity({
       secType: i.string(),
@@ -50,6 +54,7 @@ const schema = i.schema({
       currency: i.string(),
       purchaseDate: i.string(),
       memberId: i.string(),
+      userId: i.string(),
     }),
   },
 });
