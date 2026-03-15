@@ -29,22 +29,22 @@ export function Modal({ open, onClose, title, children }: ModalProps) {
   return (
     <div
       ref={overlayRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div className="w-full max-w-lg bg-white rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b-2 border-gray-100">
-          <h2 className="text-lg font-bold text-foreground">{title}</h2>
+      <div className="w-full max-w-lg bg-surface border border-border rounded-xl overflow-hidden animate-in shadow-2xl shadow-black/60">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="text-base font-semibold text-foreground tracking-tight">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            className="p-1.5 rounded-md hover:bg-surface-elevated text-foreground-secondary hover:text-foreground transition-colors duration-200"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   );

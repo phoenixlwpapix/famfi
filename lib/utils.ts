@@ -48,6 +48,38 @@ export function cn(...classes: (string | boolean | undefined | null)[]): string 
   return classes.filter(Boolean).join(' ');
 }
 
+export const TROY_OZ_TO_GRAMS = 31.1035;
+
+/** Compute CNY value of a metal holding, using live price for gold/silver if available */
+export function getMetalValueCNY(
+  grams: number,
+  metalType: string,
+  storedPrice: number,
+  storedCurrency: string,
+  metalPrices: { gold: number; silver: number },
+  rates: Record<string, number>
+): number {
+  const liveOzUSD =
+    metalType === 'gold' ? metalPrices.gold :
+    metalType === 'silver' ? metalPrices.silver : 0;
+
+  if (liveOzUSD > 0) {
+    const valueUSD = grams * (liveOzUSD / TROY_OZ_TO_GRAMS);
+    return toCNYDirect(valueUSD, 'USD', rates);
+  }
+  return toCNYDirect(grams * storedPrice, storedCurrency, rates);
+}
+
+export function getLivePricePerGram(
+  metalType: string,
+  metalPrices: { gold: number; silver: number }
+): number {
+  const liveOzUSD =
+    metalType === 'gold' ? metalPrices.gold :
+    metalType === 'silver' ? metalPrices.silver : 0;
+  return liveOzUSD > 0 ? liveOzUSD / TROY_OZ_TO_GRAMS : 0;
+}
+
 export function getInitials(name: string): string {
   return name.slice(0, 1);
 }

@@ -30,15 +30,15 @@ export function Sidebar() {
       {/* Mobile toggle */}
       <button
         onClick={toggleSidebar}
-        className="fixed top-4 left-4 z-50 p-2 bg-foreground text-white rounded-md lg:hidden"
+        className="fixed top-4 left-4 z-50 p-2 bg-surface-elevated border border-border text-foreground rounded-md lg:hidden transition-colors hover:border-border-strong"
       >
-        {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
       </button>
 
       {/* Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm"
           onClick={toggleSidebar}
         />
       )}
@@ -46,23 +46,25 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-0 z-40 h-screen w-60 bg-white border-r-2 border-gray-100 flex flex-col transition-transform duration-200',
+          'fixed left-0 top-0 z-40 h-screen w-60 flex flex-col transition-transform duration-300',
+          'bg-surface border-r border-border',
           'lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Logo */}
-        <div className="px-6 py-6 border-b-2 border-gray-100">
+        <div className="px-6 py-6 border-b border-border">
           <h1 className="text-xl font-bold tracking-tight text-foreground">
-            <span className="text-primary">Fam</span>Fi
+            <span className="text-primary">Fam</span>
+            <span className="text-foreground-secondary font-light">Fi</span>
           </h1>
-          <p className="text-xs text-foreground-secondary mt-0.5">
+          <p className="text-xs text-foreground-secondary mt-0.5 tracking-wide">
             家庭财务管理
           </p>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
+        <nav className="flex-1 px-3 py-5 space-y-0.5">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href;
             return (
@@ -73,13 +75,20 @@ export function Sidebar() {
                   if (window.innerWidth < 1024) toggleSidebar();
                 }}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 relative group',
                   isActive
-                    ? 'bg-primary text-white'
-                    : 'text-foreground-secondary hover:bg-muted hover:text-foreground'
+                    ? 'bg-primary/10 text-primary-light'
+                    : 'text-foreground-secondary hover:bg-surface-elevated hover:text-foreground'
                 )}
               >
-                <Icon size={18} strokeWidth={2.2} />
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+                )}
+                <Icon
+                  size={17}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={isActive ? 'text-primary' : ''}
+                />
                 {label}
               </Link>
             );
@@ -87,10 +96,13 @@ export function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t-2 border-gray-100">
-          <p className="text-xs text-foreground-secondary">
-            汇率每小时自动更新
-          </p>
+        <div className="px-6 py-4 border-t border-border">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+            <p className="text-xs text-foreground-secondary">
+              汇率每小时自动更新
+            </p>
+          </div>
         </div>
       </aside>
     </>

@@ -5,21 +5,30 @@ import { useFamilyStore } from '@/lib/store';
 
 export function Providers({ children }: { children: ReactNode }) {
   const setRates = useFamilyStore((s) => s.setRates);
+  const setMetalPrices = useFamilyStore((s) => s.setMetalPrices);
 
   useEffect(() => {
-    async function fetchRates() {
+    async function fetchAll() {
       try {
-        const res = await fetch('/api/rates');
-        const data = await res.json();
-        setRates(data.rates, data.updatedAt);
+        const [ratesRes, metalsRes] = await Promise.all([
+          fetch('/api/rates'),
+          fetch('/api/metals'),
+        ]);
+        const ratesData = await ratesRes.json();
+        setRates(ratesData.rates, ratesData.updatedAt);
+
+        const metalsData = await metalsRes.json();
+        if (metalsData.gold > 0 || metalsData.silver > 0) {
+          setMetalPrices({ gold: metalsData.gold, silver: metalsData.silver }, metalsData.updatedAt);
+        }
       } catch (e) {
-        console.error('Failed to fetch rates:', e);
+        console.error('Failed to fetch rates/metals:', e);
       }
     }
-    fetchRates();
-    const interval = setInterval(fetchRates, 60 * 60 * 1000);
+    fetchAll();
+    const interval = setInterval(fetchAll, 60 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [setRates]);
+  }, [setRates, setMetalPrices]);
 
   return <>{children}</>;
 }

@@ -19,14 +19,7 @@ export async function GET() {
   } catch {
     // Fallback rates
     return NextResponse.json({
-      rates: {
-        CNY: 7.24,
-        USD: 1,
-        EUR: 0.92,
-        GBP: 0.79,
-        JPY: 149.5,
-        HKD: 7.82,
-      },
+      rates: { CNY: 7.24, USD: 1, EUR: 0.92, GBP: 0.79, JPY: 149.5, HKD: 7.82 },
       updatedAt: new Date().toISOString(),
     });
   }

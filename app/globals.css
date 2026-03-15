@@ -1,25 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
+@source "../app";
+@source "../components";
 
 @theme {
-  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
-  --color-primary: #3B82F6;
-  --color-primary-dark: #2563EB;
-  --color-secondary: #10B981;
-  --color-secondary-dark: #059669;
-  --color-accent: #F59E0B;
-  --color-accent-dark: #D97706;
-  --color-danger: #EF4444;
-  --color-muted: #F3F4F6;
-  --color-foreground: #111827;
-  --color-foreground-secondary: #6B7280;
-  --color-border: #E5E7EB;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  --font-sans: var(--font-outfit), 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --color-bg: #090B0F;
+  --color-surface: #0F1218;
+  --color-surface-elevated: #161B26;
+  --color-primary: #C9A84C;
+  --color-primary-dark: #A88836;
+  --color-primary-light: #E8C97A;
+  --color-secondary: #34C77B;
+  --color-secondary-dark: #22A862;
+  --color-accent: #4A9BFF;
+  --color-accent-dark: #2E7FE8;
+  --color-danger: #FF6B6B;
+  --color-muted: #0F1218;
+  --color-border: #1C2230;
+  --color-border-strong: #28334A;
+  --color-foreground: #E4DECE;
+  --color-foreground-secondary: #566070;
 }
 
 html {
@@ -29,23 +29,27 @@ html {
 }
 
 body {
-  background-color: #FFFFFF;
+  background-color: #090B0F;
   color: var(--color-foreground);
+  background-image:
+    radial-gradient(ellipse 60% 40% at 15% 8%, rgba(201, 168, 76, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 85% 90%, rgba(74, 155, 255, 0.04) 0%, transparent 60%);
+  background-attachment: fixed;
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D1D5DB;
-  border-radius: 3px;
+  background: #1C2230;
+  border-radius: 2px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9CA3AF;
+  background: #28334A;
 }
 
 @keyframes fade-in {
@@ -54,12 +58,12 @@ body {
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes zoom-in-95 {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -69,4 +73,12 @@ body {
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out forwards;
+}
+
+/* Dark form inputs */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  color-scheme: dark;
 }

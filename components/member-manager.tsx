@@ -82,21 +82,12 @@ export function MemberManager() {
 
     if (editId) {
       db.transact(
-        db.tx.members[editId].update({
-          name: name.trim(),
-          role,
-          color,
-        })
+        db.tx.members[editId].update({ name: name.trim(), role, color })
       );
     } else {
       const newId = id();
       db.transact(
-        db.tx.members[newId].update({
-          name: name.trim(),
-          role,
-          color,
-          createdAt: Date.now(),
-        })
+        db.tx.members[newId].update({ name: name.trim(), role, color, createdAt: Date.now() })
       );
     }
     setModalOpen(false);
@@ -113,7 +104,7 @@ export function MemberManager() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin text-primary">
-          <User size={24} />
+          <User size={22} />
         </div>
       </div>
     );
@@ -124,27 +115,27 @@ export function MemberManager() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">家庭成员</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">家庭成员</h1>
           <p className="text-sm text-foreground-secondary mt-1">
             管理家庭成员及其财务档案
           </p>
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2.5 bg-foreground text-white rounded-md text-sm font-medium hover:scale-105 transition-transform duration-200"
+          className="flex items-center gap-2 px-4 py-2.5 bg-primary/15 text-primary-light border border-primary/30 rounded-md text-sm font-medium hover:bg-primary/25 transition-colors duration-200"
         >
-          <Plus size={16} strokeWidth={2.5} />
+          <Plus size={15} strokeWidth={2.5} />
           添加成员
         </button>
       </div>
 
       {/* Member Grid */}
       {members.length === 0 ? (
-        <div className="bg-muted rounded-lg p-12 text-center">
+        <div className="bg-surface border border-border rounded-xl p-12 text-center">
           <div className="inline-flex p-4 bg-primary/10 rounded-full mb-4">
-            <User size={32} className="text-primary" />
+            <User size={28} className="text-primary" />
           </div>
-          <p className="text-foreground-secondary">
+          <p className="text-foreground-secondary text-sm">
             还没有家庭成员，点击上方按钮添加
           </p>
         </div>
@@ -159,21 +150,21 @@ export function MemberManager() {
                 key={member.id}
                 onClick={() => setActiveMember(isActive ? null : member.id)}
                 className={cn(
-                  'bg-muted rounded-lg p-5 cursor-pointer transition-all duration-200 hover:scale-[1.02]',
-                  isActive && 'ring-2 ring-primary'
+                  'bg-surface border rounded-xl p-5 cursor-pointer transition-all duration-200 hover:border-border-strong',
+                  isActive ? 'border-primary/50 bg-primary/5' : 'border-border'
                 )}
               >
                 {/* Member Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-10 h-10 rounded-md flex items-center justify-center text-white font-bold text-sm"
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
                       style={{ backgroundColor: member.color }}
                     >
                       {getInitials(member.name)}
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">{member.name}</p>
+                      <p className="font-semibold text-sm text-foreground">{member.name}</p>
                       <p className="text-xs text-foreground-secondary">
                         {MEMBER_ROLES[member.role as MemberRole] || member.role}
                       </p>
@@ -181,20 +172,14 @@ export function MemberManager() {
                   </div>
                   <div className="flex gap-1">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openEdit(member);
-                      }}
-                      className="p-1.5 rounded-md hover:bg-white transition-colors"
+                      onClick={(e) => { e.stopPropagation(); openEdit(member); }}
+                      className="p-1.5 rounded-md hover:bg-surface-elevated transition-colors"
                     >
                       <Edit3 size={14} className="text-foreground-secondary" />
                     </button>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(member.id);
-                      }}
-                      className="p-1.5 rounded-md hover:bg-white transition-colors"
+                      onClick={(e) => { e.stopPropagation(); handleDelete(member.id); }}
+                      className="p-1.5 rounded-md hover:bg-surface-elevated transition-colors"
                     >
                       <Trash2 size={14} className="text-danger" />
                     </button>
@@ -205,28 +190,22 @@ export function MemberManager() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-foreground-secondary">总资产</span>
-                    <span className="text-lg font-bold tracking-tight">
+                    <span className="text-lg font-bold tracking-tight text-foreground">
                       {formatCNY(assets.total)}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-gray-200">
+                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border">
                     <div className="text-center">
                       <p className="text-xs text-foreground-secondary">存款</p>
-                      <p className="text-xs font-medium mt-0.5">
-                        {assets.depositCount} 笔
-                      </p>
+                      <p className="text-xs font-medium mt-0.5 text-foreground">{assets.depositCount} 笔</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-foreground-secondary">贵金属</p>
-                      <p className="text-xs font-medium mt-0.5">
-                        {assets.metalCount} 笔
-                      </p>
+                      <p className="text-xs font-medium mt-0.5 text-foreground">{assets.metalCount} 笔</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-foreground-secondary">证券</p>
-                      <p className="text-xs font-medium mt-0.5">
-                        {assets.securityCount} 笔
-                      </p>
+                      <p className="text-xs font-medium mt-0.5 text-foreground">{assets.securityCount} 笔</p>
                     </div>
                   </div>
                 </div>
@@ -244,17 +223,17 @@ export function MemberManager() {
       >
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium block mb-1.5">姓名</label>
+            <label className="text-xs font-medium block mb-1.5 text-foreground-secondary">姓名</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="请输入姓名"
-              className="w-full px-3 py-2.5 bg-gray-100 rounded-md text-sm focus:bg-white focus:border-2 focus:border-primary outline-none transition-all"
+              className="w-full px-3 py-2.5 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
             />
           </div>
 
           <div>
-            <label className="text-sm font-medium block mb-1.5">角色</label>
+            <label className="text-xs font-medium block mb-1.5 text-foreground-secondary">角色</label>
             <div className="grid grid-cols-4 gap-2">
               {(Object.entries(MEMBER_ROLES) as [MemberRole, string][]).map(
                 ([key, label]) => (
@@ -264,8 +243,8 @@ export function MemberManager() {
                     className={cn(
                       'px-3 py-2 rounded-md text-xs font-medium transition-all duration-200',
                       role === key
-                        ? 'bg-foreground text-white'
-                        : 'bg-gray-100 text-foreground-secondary hover:bg-gray-200'
+                        ? 'bg-surface-elevated text-foreground border border-border-strong'
+                        : 'bg-bg text-foreground-secondary border border-border hover:border-border-strong hover:text-foreground'
                     )}
                   >
                     {label}
@@ -276,15 +255,15 @@ export function MemberManager() {
           </div>
 
           <div>
-            <label className="text-sm font-medium block mb-1.5">颜色标识</label>
+            <label className="text-xs font-medium block mb-1.5 text-foreground-secondary">颜色标识</label>
             <div className="flex gap-2">
               {MEMBER_COLORS.map((c) => (
                 <button
                   key={c}
                   onClick={() => setColor(c)}
                   className={cn(
-                    'w-8 h-8 rounded-md transition-transform duration-200',
-                    color === c && 'scale-110 ring-2 ring-offset-2 ring-foreground'
+                    'w-8 h-8 rounded-md transition-all duration-200',
+                    color === c && 'scale-110 ring-2 ring-offset-2 ring-offset-surface ring-foreground/40'
                   )}
                   style={{ backgroundColor: c }}
                 />
@@ -295,7 +274,7 @@ export function MemberManager() {
           <button
             onClick={handleSave}
             disabled={!name.trim()}
-            className="w-full py-3 bg-primary text-white rounded-md font-medium text-sm hover:bg-primary-dark disabled:opacity-40 transition-colors duration-200"
+            className="w-full py-3 bg-primary text-bg rounded-md font-semibold text-sm hover:bg-primary-light disabled:opacity-30 transition-colors duration-200"
           >
             {editId ? '保存修改' : '添加成员'}
           </button>
