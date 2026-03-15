@@ -1,36 +1,68 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FamFi — 家庭财务管理系统
 
-## Getting Started
+全面的家庭财务管理系统，实时追踪收入、资产与投资。
 
-First, run the development server:
+## 功能特性
+
+- **用户认证** — InstantDB 魔法链接（Magic Link）登录，无需密码，邮件验证码一键登录
+- **数据隔离** — 每位用户只能看到自己的家庭数据，完全私密
+- **多类资产管理** — 存款（活期/定期）、贵金属（黄金/白银）、有价证券（基金/股票/加密货币）
+- **实时行情** — 黄金、白银实时价格自动获取，多货币（CNY/USD/EUR/HKD 等）自动换算
+- **家庭成员档案** — 为每位成员建立独立财务档案，支持资产筛选与汇总
+- **周期收入** — 设置每月自动生成的周期收入记录（如工资）
+- **财务总览仪表板** — 家庭资产饼图、趋势图、各类资产明细
+
+## 技术栈
+
+- **框架**: Next.js 16 + TypeScript + React 19（App Router）
+- **数据库**: InstantDB（实时同步，含认证）
+- **样式**: Tailwind CSS v4（Midnight Ledger 深色主题）
+- **状态管理**: Zustand
+- **图表**: Recharts
+- **图标**: Lucide React
+
+## 认证流程
+
+1. 访问应用时展示落地页（含登录表单）
+2. 用户输入邮箱 → 点击"发送验证码"
+3. InstantDB 发送 6 位验证码至邮箱
+4. 用户输入验证码 → 登录成功
+5. 登出：点击侧边栏底部退出按钮
+
+## 本地开发
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+打开 [http://localhost:3000](http://localhost:3000) 查看应用。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 项目结构
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+  layout.tsx          # 根布局（含 AuthGate）
+  page.tsx            # 仪表板
+  members/page.tsx    # 家庭成员
+  assets/page.tsx     # 资产管理
+  income/page.tsx     # 收入管理
+  api/
+    rates/route.ts    # 汇率 API
+    metals/route.ts   # 贵金属价格 API
 
-## Learn More
+components/
+  auth-gate.tsx       # 认证守卫 + 落地页
+  sidebar.tsx         # 导航侧边栏（含退出登录）
+  dashboard.tsx       # 财务总览仪表板
+  member-manager.tsx  # 家庭成员管理
+  income-manager.tsx  # 收入管理
+  asset-manager.tsx   # 资产管理（存款/贵金属/证券）
+  providers.tsx       # 全局数据提供者（汇率/金属价格）
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+lib/
+  instant.ts          # InstantDB 初始化 + Schema
+  store.ts            # Zustand 全局状态
+  types.ts            # TypeScript 类型定义
+  utils.ts            # 工具函数
+```
