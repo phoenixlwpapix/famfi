@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "famfi-dev",
-      "runtimeExecutable": "pnpm.cmd",
-      "runtimeArgs": ["dev"],
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\npx.cmd",
+      "runtimeArgs": ["next", "dev"],
       "port": 3000,
       "autoPort": true
     }

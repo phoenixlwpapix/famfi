@@ -7,6 +7,8 @@ import {
   Users,
   Wallet,
   TrendingUp,
+  TrendingDown,
+  Target,
   Menu,
   X,
   LogOut,
@@ -20,6 +22,8 @@ const NAV_ITEMS = [
   { href: '/members', label: '家庭成员', icon: Users },
   { href: '/assets', label: '资产管理', icon: Wallet },
   { href: '/income', label: '收入管理', icon: TrendingUp },
+  { href: '/expenses', label: '支出管理', icon: TrendingDown },
+  { href: '/goals', label: '财务目标', icon: Target },
 ];
 
 export function Sidebar() {

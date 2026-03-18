@@ -4,6 +4,9 @@ export type DepositType = 'current' | 'fixed';
 export type MetalType = 'gold' | 'silver';
 export type SecurityType = 'fund' | 'stock' | 'crypto';
 export type Currency = 'CNY' | 'USD' | 'EUR' | 'GBP' | 'JPY' | 'HKD';
+export type ExpenseCategory = 'housing' | 'food' | 'transport' | 'education' | 'healthcare' | 'entertainment' | 'shopping' | 'other';
+export type GoalCategory = 'savings' | 'investment' | 'education' | 'housing' | 'travel' | 'retirement' | 'other';
+export type GoalStatus = 'active' | 'completed' | 'paused';
 
 export const MEMBER_ROLES: Record<MemberRole, string> = {
   parent: '父母',
@@ -41,6 +44,38 @@ export const CURRENCIES: Record<Currency, string> = {
   GBP: '英镑',
   JPY: '日元',
   HKD: '港币',
+};
+
+export const EXPENSE_CATEGORIES: Record<ExpenseCategory, string> = {
+  housing: '住房',
+  food: '餐饮',
+  transport: '交通',
+  education: '教育',
+  healthcare: '医疗',
+  entertainment: '娱乐',
+  shopping: '购物',
+  other: '其他',
+};
+
+export const EXPENSE_CATEGORY_ICONS: Record<ExpenseCategory, string> = {
+  housing: '🏠',
+  food: '🍽️',
+  transport: '🚗',
+  education: '📚',
+  healthcare: '🏥',
+  entertainment: '🎮',
+  shopping: '🛍️',
+  other: '📦',
+};
+
+export const GOAL_CATEGORIES: Record<GoalCategory, string> = {
+  savings: '储蓄',
+  investment: '投资',
+  education: '教育',
+  housing: '购房',
+  travel: '旅行',
+  retirement: '养老',
+  other: '其他',
 };
 
 export const MEMBER_COLORS = [
