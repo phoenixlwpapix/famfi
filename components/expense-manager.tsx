@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Plus, Trash2, Pencil, RefreshCw, Repeat } from 'lucide-react';
 import { db, id } from '@/lib/instant';
 import { useFamilyStore } from '@/lib/store';
 import { Modal } from '@/components/modal';
+import { useRecurringAutoGen } from '@/hooks/use-recurring-auto-gen';
 import {
   EXPENSE_CATEGORIES,
   CURRENCIES,
@@ -26,10 +27,10 @@ export function ExpenseManager() {
     recurring: false,
     dayOfMonth: 1,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const rates = useFamilyStore((s) => s.rates);
   const activeMemberId = useFamilyStore((s) => s.activeMemberId);
-  const autoGenDone = useRef(false);
   const { user } = db.useAuth();
   const userId = user?.id ?? '';
 
@@ -38,47 +39,26 @@ export function ExpenseManager() {
     expenses: { $: { where: { userId } } },
   });
 
-  // Auto-generate recurring expenses for current month
-  useEffect(() => {
-    if (!data || !userId || autoGenDone.current) return;
-    autoGenDone.current = true;
+  const allExpenses = data?.expenses;
 
-    const allExpenses = data.expenses || [];
-    const templates = allExpenses.filter((e) => e.recurring);
-    if (templates.length === 0) return;
+  // Auto-generate recurring expenses with idempotent keys
+  const buildExpensePayload = useCallback(
+    (template: typeof allExpenses extends (infer T)[] | undefined ? T : never, dateStr: string, uid: string) => ({
+      category: template.category,
+      amount: template.amount,
+      currency: template.currency,
+      description: template.description || '',
+      date: dateStr,
+      memberId: template.memberId,
+      recurring: false,
+      dayOfMonth: 0,
+      recurringSourceId: template.id,
+      userId: template.userId || uid,
+    }),
+    []
+  );
 
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-    const txns = templates
-      .filter((template) => {
-        return !allExpenses.some(
-          (e) =>
-            e.recurringSourceId === template.id &&
-            e.date?.startsWith(currentMonth)
-        );
-      })
-      .map((template) => {
-        const day = Math.min(template.dayOfMonth || 1, 28);
-        const dateStr = `${currentMonth}-${String(day).padStart(2, '0')}`;
-        return db.tx.expenses[id()].update({
-          category: template.category,
-          amount: template.amount,
-          currency: template.currency,
-          description: template.description || '',
-          date: dateStr,
-          memberId: template.memberId,
-          recurring: false,
-          dayOfMonth: 0,
-          recurringSourceId: template.id,
-          userId: template.userId || userId,
-        });
-      });
-
-    if (txns.length > 0) {
-      db.transact(txns);
-    }
-  }, [data, userId]);
+  useRecurringAutoGen(allExpenses, userId, 'expenses', buildExpensePayload);
 
   const members: { id: string; name: string; color: string }[] = data?.members || [];
 
@@ -111,7 +91,6 @@ export function ExpenseManager() {
       .filter((e) => e.date?.startsWith(lastMonth))
       .reduce((sum, e) => sum + toCNYDirect(e.amount, e.currency, rates), 0);
 
-    // Category breakdown for this month
     const categoryBreakdown: Record<string, number> = {};
     records
       .filter((e) => e.date?.startsWith(thisMonth))
@@ -122,6 +101,15 @@ export function ExpenseManager() {
 
     return { thisMonthTotal, lastMonthTotal, categoryBreakdown };
   }, [records, rates]);
+
+  function clearError(field: string) {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
 
   function openAdd() {
     setEditingId(null);
@@ -135,6 +123,7 @@ export function ExpenseManager() {
       recurring: false,
       dayOfMonth: 1,
     });
+    setErrors({});
     setModalOpen(true);
   }
 
@@ -150,11 +139,20 @@ export function ExpenseManager() {
       recurring: expense.recurring || false,
       dayOfMonth: expense.dayOfMonth || 1,
     });
+    setErrors({});
     setModalOpen(true);
   }
 
   function handleSave() {
-    if (!form.amount || !form.memberId) return;
+    const newErrors: Record<string, string> = {};
+    if (!form.memberId) newErrors.memberId = '请选择成员';
+    if (!form.amount) newErrors.amount = '请输入金额';
+    else if (parseFloat(form.amount) <= 0) newErrors.amount = '金额必须大于 0';
+    if (!form.recurring && !form.date) newErrors.date = '请选择日期';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     const payload = form.recurring
       ? {
@@ -191,7 +189,6 @@ export function ExpenseManager() {
     setModalOpen(false);
     setEditingId(null);
     setForm({ category: 'food', amount: '', currency: 'CNY', description: '', date: '', memberId: '', recurring: false, dayOfMonth: 1 });
-    autoGenDone.current = false;
   }
 
   if (isLoading) {
@@ -454,8 +451,11 @@ export function ExpenseManager() {
             <label className="text-xs font-medium block mb-1">所属成员</label>
             <select
               value={form.memberId}
-              onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-              className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all appearance-none"
+              onChange={(e) => { setForm((f) => ({ ...f, memberId: e.target.value })); clearError('memberId'); }}
+              className={cn(
+                'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all appearance-none',
+                errors.memberId ? 'border-danger' : 'border-border focus:border-primary'
+              )}
             >
               <option value="">请选择</option>
               {members.map((m) => (
@@ -464,6 +464,7 @@ export function ExpenseManager() {
                 </option>
               ))}
             </select>
+            {errors.memberId && <p className="text-xs text-danger mt-1">{errors.memberId}</p>}
           </div>
           <div>
             <label className="text-xs font-medium block mb-1">支出类别</label>
@@ -491,11 +492,16 @@ export function ExpenseManager() {
               <label className="text-xs font-medium block mb-1">金额</label>
               <input
                 type="number"
+                min={0}
                 value={form.amount}
-                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                onChange={(e) => { setForm((f) => ({ ...f, amount: e.target.value })); clearError('amount'); }}
                 placeholder="金额"
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
+                className={cn(
+                  'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all placeholder:text-foreground-secondary/40',
+                  errors.amount ? 'border-danger' : 'border-border focus:border-primary'
+                )}
               />
+              {errors.amount && <p className="text-xs text-danger mt-1">{errors.amount}</p>}
             </div>
             <div>
               <label className="text-xs font-medium block mb-1">币种</label>
@@ -563,9 +569,13 @@ export function ExpenseManager() {
               <input
                 type="date"
                 value={form.date}
-                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
+                onChange={(e) => { setForm((f) => ({ ...f, date: e.target.value })); clearError('date'); }}
+                className={cn(
+                  'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all placeholder:text-foreground-secondary/40',
+                  errors.date ? 'border-danger' : 'border-border focus:border-primary'
+                )}
               />
+              {errors.date && <p className="text-xs text-danger mt-1">{errors.date}</p>}
             </div>
           )}
 
@@ -581,7 +591,6 @@ export function ExpenseManager() {
           </div>
           <button
             onClick={handleSave}
-            disabled={!form.amount || !form.memberId}
             className="w-full py-3 bg-danger text-white rounded-md font-semibold text-sm hover:bg-danger/90 disabled:opacity-30 transition-colors duration-200"
           >
             {editingId ? '保存' : '添加'}

@@ -25,6 +25,7 @@ export function GoalManager() {
     deadline: '',
     category: 'savings' as GoalCategory,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const rates = useFamilyStore((s) => s.rates);
   const { user } = db.useAuth();
@@ -54,6 +55,15 @@ export function GoalManager() {
     return { activeCount: active.length, completedCount: completed.length, totalTarget, totalCurrent, overallProgress };
   }, [goals, rates]);
 
+  function clearError(field: string) {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
   function openAdd() {
     setEditingId(null);
     setForm({
@@ -64,6 +74,7 @@ export function GoalManager() {
       deadline: '',
       category: 'savings',
     });
+    setErrors({});
     setModalOpen(true);
   }
 
@@ -77,11 +88,20 @@ export function GoalManager() {
       deadline: goal.deadline || '',
       category: (goal.category as GoalCategory) || 'savings',
     });
+    setErrors({});
     setModalOpen(true);
   }
 
   function handleSave() {
-    if (!form.name || !form.targetAmount) return;
+    const newErrors: Record<string, string> = {};
+    if (!form.name.trim()) newErrors.name = '请输入目标名称';
+    if (!form.targetAmount) newErrors.targetAmount = '请输入目标金额';
+    else if (parseFloat(form.targetAmount) <= 0) newErrors.targetAmount = '目标金额必须大于 0';
+    if (form.currentAmount && parseFloat(form.currentAmount) < 0) newErrors.currentAmount = '当前金额不能为负数';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     const currentAmount = parseFloat(form.currentAmount) || 0;
     const targetAmount = parseFloat(form.targetAmount);
@@ -311,10 +331,14 @@ export function GoalManager() {
             <input
               type="text"
               value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              onChange={(e) => { setForm((f) => ({ ...f, name: e.target.value })); clearError('name'); }}
               placeholder="如 买房首付、子女教育基金"
-              className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
+              className={cn(
+                'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all placeholder:text-foreground-secondary/40',
+                errors.name ? 'border-danger' : 'border-border focus:border-primary'
+              )}
             />
+            {errors.name && <p className="text-xs text-danger mt-1">{errors.name}</p>}
           </div>
           <div>
             <label className="text-xs font-medium block mb-1">目标类别</label>
@@ -342,21 +366,31 @@ export function GoalManager() {
               <label className="text-xs font-medium block mb-1">目标金额</label>
               <input
                 type="number"
+                min={0}
                 value={form.targetAmount}
-                onChange={(e) => setForm((f) => ({ ...f, targetAmount: e.target.value }))}
+                onChange={(e) => { setForm((f) => ({ ...f, targetAmount: e.target.value })); clearError('targetAmount'); }}
                 placeholder="目标金额"
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
+                className={cn(
+                  'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all placeholder:text-foreground-secondary/40',
+                  errors.targetAmount ? 'border-danger' : 'border-border focus:border-primary'
+                )}
               />
+              {errors.targetAmount && <p className="text-xs text-danger mt-1">{errors.targetAmount}</p>}
             </div>
             <div>
               <label className="text-xs font-medium block mb-1">当前已存</label>
               <input
                 type="number"
+                min={0}
                 value={form.currentAmount}
-                onChange={(e) => setForm((f) => ({ ...f, currentAmount: e.target.value }))}
+                onChange={(e) => { setForm((f) => ({ ...f, currentAmount: e.target.value })); clearError('currentAmount'); }}
                 placeholder="当前金额"
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
+                className={cn(
+                  'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all placeholder:text-foreground-secondary/40',
+                  errors.currentAmount ? 'border-danger' : 'border-border focus:border-primary'
+                )}
               />
+              {errors.currentAmount && <p className="text-xs text-danger mt-1">{errors.currentAmount}</p>}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -388,7 +422,6 @@ export function GoalManager() {
           </div>
           <button
             onClick={handleSave}
-            disabled={!form.name || !form.targetAmount}
             className="w-full py-3 bg-primary text-bg rounded-md font-semibold text-sm hover:bg-primary-light disabled:opacity-30 transition-colors duration-200"
           >
             {editingId ? '保存' : '创建'}

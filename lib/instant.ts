@@ -1,6 +1,6 @@
 import { init, id as instantId, i } from '@instantdb/react';
 
-const APP_ID = 'b51ff63b-cb56-4291-a1a1-4f5ce918bd99';
+const APP_ID = process.env.NEXT_PUBLIC_INSTANTDB_APP_ID!;
 
 const schema = i.schema({
   entities: {

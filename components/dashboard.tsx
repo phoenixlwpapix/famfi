@@ -104,14 +104,12 @@ export function Dashboard() {
       0
     );
 
-    const trendData = Array.from({ length: 6 }, (_, i) => {
-      const month = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
-      const factor = 0.85 + (i / 5) * 0.15 + Math.random() * 0.05;
-      return {
-        month: `${month.getMonth() + 1}月`,
-        value: Math.round(totalAssets * factor),
-      };
-    });
+    // Asset allocation breakdown for the bar/area chart (real data, not mock)
+    const trendData = [
+      { month: '存款', value: Math.round(depositTotal) },
+      { month: '贵金属', value: Math.round(metalTotal) },
+      { month: '证券', value: Math.round(securityTotal) },
+    ].filter((d) => d.value > 0);
 
     return {
       totalAssets,
@@ -242,7 +240,7 @@ export function Dashboard() {
 
         {/* Trend Chart */}
         <div className="bg-surface border border-border rounded-xl p-6 lg:col-span-2">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground-secondary mb-5">资产趋势</h3>
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground-secondary mb-5">资产分布</h3>
           {stats.totalAssets > 0 ? (
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
@@ -263,7 +261,7 @@ export function Dashboard() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 11, fill: '#566070' }}
-                    tickFormatter={(v) => `${(v / 10000).toFixed(0)}万`}
+                    tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}万` : `${v}`}
                   />
                   <Tooltip
                     formatter={(value) => [formatCNY(Number(value)), '总资产']}

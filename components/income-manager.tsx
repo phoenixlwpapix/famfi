@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Plus, Trash2, Pencil, RefreshCw, Repeat } from 'lucide-react';
 import { db, id } from '@/lib/instant';
 import { useFamilyStore } from '@/lib/store';
 import { Modal } from '@/components/modal';
+import { useRecurringAutoGen } from '@/hooks/use-recurring-auto-gen';
 import {
   INCOME_TYPES,
   CURRENCIES,
@@ -26,10 +27,10 @@ export function IncomeManager() {
     recurring: false,
     dayOfMonth: 1,
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const rates = useFamilyStore((s) => s.rates);
   const activeMemberId = useFamilyStore((s) => s.activeMemberId);
-  const autoGenDone = useRef(false);
   const { user } = db.useAuth();
   const userId = user?.id ?? '';
 
@@ -38,52 +39,29 @@ export function IncomeManager() {
     incomes: { $: { where: { userId } } },
   });
 
-  // Auto-generate recurring incomes for current month
-  useEffect(() => {
-    if (!data || !userId || autoGenDone.current) return;
-    autoGenDone.current = true;
+  const allIncomes = data?.incomes;
 
-    const allIncomes = data.incomes || [];
-    const templates = allIncomes.filter((i) => i.recurring);
-    if (templates.length === 0) return;
+  // Auto-generate recurring incomes with idempotent keys
+  const buildIncomePayload = useCallback(
+    (template: typeof allIncomes extends (infer T)[] | undefined ? T : never, dateStr: string, uid: string) => ({
+      type: template.type,
+      amount: template.amount,
+      currency: template.currency,
+      description: template.description || '',
+      date: dateStr,
+      memberId: template.memberId,
+      recurring: false,
+      dayOfMonth: 0,
+      recurringSourceId: template.id,
+      userId: template.userId || uid,
+    }),
+    []
+  );
 
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-    const txns = templates
-      .filter((template) => {
-        // Check if already generated for this month
-        return !allIncomes.some(
-          (i) =>
-            i.recurringSourceId === template.id &&
-            i.date?.startsWith(currentMonth)
-        );
-      })
-      .map((template) => {
-        const day = Math.min(template.dayOfMonth || 1, 28);
-        const dateStr = `${currentMonth}-${String(day).padStart(2, '0')}`;
-        return db.tx.incomes[id()].update({
-          type: template.type,
-          amount: template.amount,
-          currency: template.currency,
-          description: template.description || '',
-          date: dateStr,
-          memberId: template.memberId,
-          recurring: false,
-          dayOfMonth: 0,
-          recurringSourceId: template.id,
-          userId: template.userId || userId,
-        });
-      });
-
-    if (txns.length > 0) {
-      db.transact(txns);
-    }
-  }, [data]);
+  useRecurringAutoGen(allIncomes, userId, 'incomes', buildIncomePayload);
 
   const members: { id: string; name: string; color: string }[] = data?.members || [];
 
-  // Split incomes: templates vs records
   const { templates, records } = useMemo(() => {
     const all = data?.incomes || [];
     const t = all.filter((i) => i.recurring);
@@ -99,7 +77,6 @@ export function IncomeManager() {
     return { templates: t, records: r };
   }, [data, activeMemberId]);
 
-  // Monthly summary (from records only, not templates)
   const monthlyStats = useMemo(() => {
     const now = new Date();
     const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -119,6 +96,15 @@ export function IncomeManager() {
     return { thisMonthTotal, lastMonthTotal };
   }, [records, rates]);
 
+  function clearError(field: string) {
+    setErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
   function openAdd() {
     setEditingId(null);
     setForm({
@@ -131,6 +117,7 @@ export function IncomeManager() {
       recurring: false,
       dayOfMonth: 1,
     });
+    setErrors({});
     setModalOpen(true);
   }
 
@@ -146,11 +133,20 @@ export function IncomeManager() {
       recurring: income.recurring || false,
       dayOfMonth: income.dayOfMonth || 1,
     });
+    setErrors({});
     setModalOpen(true);
   }
 
   function handleSave() {
-    if (!form.amount || !form.memberId) return;
+    const newErrors: Record<string, string> = {};
+    if (!form.memberId) newErrors.memberId = '请选择成员';
+    if (!form.amount) newErrors.amount = '请输入金额';
+    else if (parseFloat(form.amount) <= 0) newErrors.amount = '金额必须大于 0';
+    if (!form.recurring && !form.date) newErrors.date = '请选择日期';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     const payload = form.recurring
       ? {
@@ -187,7 +183,6 @@ export function IncomeManager() {
     setModalOpen(false);
     setEditingId(null);
     setForm({ type: 'salary', amount: '', currency: 'CNY', description: '', date: '', memberId: '', recurring: false, dayOfMonth: 1 });
-    autoGenDone.current = false;
   }
 
   if (isLoading) {
@@ -400,8 +395,11 @@ export function IncomeManager() {
             <label className="text-xs font-medium block mb-1">所属成员</label>
             <select
               value={form.memberId}
-              onChange={(e) => setForm((f) => ({ ...f, memberId: e.target.value }))}
-              className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all appearance-none"
+              onChange={(e) => { setForm((f) => ({ ...f, memberId: e.target.value })); clearError('memberId'); }}
+              className={cn(
+                'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all appearance-none',
+                errors.memberId ? 'border-danger' : 'border-border focus:border-primary'
+              )}
             >
               <option value="">请选择</option>
               {members.map((m) => (
@@ -410,6 +408,7 @@ export function IncomeManager() {
                 </option>
               ))}
             </select>
+            {errors.memberId && <p className="text-xs text-danger mt-1">{errors.memberId}</p>}
           </div>
           <div>
             <label className="text-xs font-medium block mb-1">收入类型</label>
@@ -437,11 +436,16 @@ export function IncomeManager() {
               <label className="text-xs font-medium block mb-1">金额</label>
               <input
                 type="number"
+                min={0}
                 value={form.amount}
-                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                onChange={(e) => { setForm((f) => ({ ...f, amount: e.target.value })); clearError('amount'); }}
                 placeholder="金额"
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
+                className={cn(
+                  'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all placeholder:text-foreground-secondary/40',
+                  errors.amount ? 'border-danger' : 'border-border focus:border-primary'
+                )}
               />
+              {errors.amount && <p className="text-xs text-danger mt-1">{errors.amount}</p>}
             </div>
             <div>
               <label className="text-xs font-medium block mb-1">币种</label>
@@ -509,9 +513,13 @@ export function IncomeManager() {
               <input
                 type="date"
                 value={form.date}
-                onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                className="w-full px-3 py-2 bg-bg border border-border rounded-md text-sm text-foreground focus:border-primary outline-none transition-all placeholder:text-foreground-secondary/40"
+                onChange={(e) => { setForm((f) => ({ ...f, date: e.target.value })); clearError('date'); }}
+                className={cn(
+                  'w-full px-3 py-2 bg-bg border rounded-md text-sm text-foreground outline-none transition-all placeholder:text-foreground-secondary/40',
+                  errors.date ? 'border-danger' : 'border-border focus:border-primary'
+                )}
               />
+              {errors.date && <p className="text-xs text-danger mt-1">{errors.date}</p>}
             </div>
           )}
 
@@ -527,7 +535,6 @@ export function IncomeManager() {
           </div>
           <button
             onClick={handleSave}
-            disabled={!form.amount || !form.memberId}
             className="w-full py-3 bg-primary text-bg rounded-md font-semibold text-sm hover:bg-primary-light disabled:opacity-30 transition-colors duration-200"
           >
             {editingId ? '保存' : '添加'}

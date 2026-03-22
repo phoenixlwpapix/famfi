@@ -4,6 +4,7 @@ import './globals.css';
 import { Sidebar } from '@/components/sidebar';
 import { Providers } from '@/components/providers';
 import { AuthGate } from '@/components/auth-gate';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -24,16 +25,20 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={outfit.variable}>
-        <Providers>
-          <AuthGate>
-            <Sidebar />
-            <main className="lg:ml-60 min-h-screen">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-16 lg:pt-8">
-                {children}
-              </div>
-            </main>
-          </AuthGate>
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <AuthGate>
+              <Sidebar />
+              <main className="lg:ml-60 min-h-screen">
+                <ErrorBoundary>
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-16 lg:pt-8">
+                    {children}
+                  </div>
+                </ErrorBoundary>
+              </main>
+            </AuthGate>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );
