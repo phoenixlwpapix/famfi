@@ -216,8 +216,6 @@ export function Dashboard() {
                     <Tooltip
                       formatter={(value) => formatCNY(Number(value))}
                       contentStyle={tooltipStyle}
-                      labelStyle={tooltipLabelStyle}
-                      itemStyle={tooltipItemStyle}
                     />
                   </PieChart>
                 </ResponsiveContainer>
