@@ -140,6 +140,8 @@ export function Dashboard() {
     fontSize: '12px',
     color: '#E4DECE',
   };
+  const tooltipLabelStyle = { color: '#E4DECE' };
+  const tooltipItemStyle = { color: '#E4DECE' };
 
   return (
     <div className="space-y-6">
@@ -214,6 +216,8 @@ export function Dashboard() {
                     <Tooltip
                       formatter={(value) => formatCNY(Number(value))}
                       contentStyle={tooltipStyle}
+                      labelStyle={tooltipLabelStyle}
+                      itemStyle={tooltipItemStyle}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -259,6 +263,8 @@ export function Dashboard() {
                   <Tooltip
                     formatter={(value) => [formatCNY(Number(value)), '金额']}
                     contentStyle={tooltipStyle}
+                      labelStyle={tooltipLabelStyle}
+                      itemStyle={tooltipItemStyle}
                     cursor={{ fill: 'rgba(201,168,76,0.06)', radius: 4 }}
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]}>
