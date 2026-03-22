@@ -13,8 +13,8 @@ import {
   Pie,
   Cell,
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -104,11 +104,10 @@ export function Dashboard() {
       0
     );
 
-    // Asset allocation breakdown for the bar/area chart (real data, not mock)
-    const trendData = [
-      { month: '存款', value: Math.round(depositTotal) },
-      { month: '贵金属', value: Math.round(metalTotal) },
-      { month: '证券', value: Math.round(securityTotal) },
+    const assetDistribution = [
+      { name: '存款', value: Math.round(depositTotal), color: '#C9A84C' },
+      { name: '贵金属', value: Math.round(metalTotal), color: '#F59E0B' },
+      { name: '证券', value: Math.round(securityTotal), color: '#34C77B' },
     ].filter((d) => d.value > 0);
 
     return {
@@ -119,7 +118,7 @@ export function Dashboard() {
       depositTotal,
       metalTotal,
       securityTotal,
-      trendData,
+      assetDistribution,
     };
   }, [data, rates, metalPrices]);
 
@@ -238,24 +237,18 @@ export function Dashboard() {
           )}
         </div>
 
-        {/* Trend Chart */}
+        {/* Asset Distribution Bar Chart */}
         <div className="bg-surface border border-border rounded-xl p-6 lg:col-span-2">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-foreground-secondary mb-5">资产分布</h3>
-          {stats.totalAssets > 0 ? (
+          {stats.assetDistribution.length > 0 ? (
             <div className="h-48">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats.trendData}>
-                  <defs>
-                    <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#C9A84C" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="#C9A84C" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
+                <BarChart data={stats.assetDistribution} barSize={40}>
                   <XAxis
-                    dataKey="month"
+                    dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 11, fill: '#566070' }}
+                    tick={{ fontSize: 12, fill: '#566070' }}
                   />
                   <YAxis
                     axisLine={false}
@@ -264,22 +257,21 @@ export function Dashboard() {
                     tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}万` : `${v}`}
                   />
                   <Tooltip
-                    formatter={(value) => [formatCNY(Number(value)), '总资产']}
+                    formatter={(value) => [formatCNY(Number(value)), '金额']}
                     contentStyle={tooltipStyle}
+                    cursor={{ fill: 'rgba(201,168,76,0.06)', radius: 4 }}
                   />
-                  <Area
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#C9A84C"
-                    strokeWidth={2}
-                    fill="url(#areaGrad)"
-                  />
-                </AreaChart>
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {stats.assetDistribution.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
             <div className="h-48 flex items-center justify-center text-foreground-secondary text-sm">
-              添加资产后将展示趋势图表
+              添加资产后将展示分布图表
             </div>
           )}
         </div>
