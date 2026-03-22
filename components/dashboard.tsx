@@ -259,10 +259,16 @@ export function Dashboard() {
                     tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}万` : `${v}`}
                   />
                   <Tooltip
-                    formatter={(value) => [formatCNY(Number(value)), '金额']}
-                    contentStyle={tooltipStyle}
-                      labelStyle={tooltipLabelStyle}
-                      itemStyle={tooltipItemStyle}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.[0]) return null;
+                      const { name, value, color } = payload[0].payload as { name: string; value: number; color: string };
+                      return (
+                        <div style={{ ...tooltipStyle, padding: '8px 12px' }}>
+                          <p style={{ color, fontWeight: 600 }}>{formatCNY(value)}</p>
+                          <p style={{ color: '#566070', fontSize: '11px', marginTop: '2px' }}>{name}</p>
+                        </div>
+                      );
+                    }}
                     cursor={{ fill: 'rgba(201,168,76,0.06)', radius: 4 }}
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]}>
