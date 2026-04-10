@@ -536,7 +536,7 @@ export function ExpenseManager() {
             >
               <span
                 className={cn(
-                  'absolute top-1 w-4 h-4 bg-foreground rounded-full shadow transition-transform duration-200',
+                  'absolute top-1 left-0 w-4 h-4 bg-foreground rounded-full shadow transition-transform duration-200',
                   form.recurring ? 'translate-x-5' : 'translate-x-1'
                 )}
               />

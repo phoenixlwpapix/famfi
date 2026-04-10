@@ -21,6 +21,8 @@ const schema = i.schema({
       recurring: i.boolean(),
       dayOfMonth: i.number(),
       recurringSourceId: i.string(),
+      startDate: i.string(),
+      endDate: i.string(),
       userId: i.string(),
     }),
     deposits: i.entity({
