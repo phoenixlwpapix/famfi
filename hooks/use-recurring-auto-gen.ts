@@ -9,7 +9,7 @@ interface RecurringItem {
   recurringSourceId: string;
   date: string;
   dayOfMonth: number;
-  userId: string;
+  userId?: string;
   startDate?: string;
   endDate?: string;
 }
