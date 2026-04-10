@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -12,6 +13,9 @@ import {
   Menu,
   X,
   LogOut,
+  Download,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { useFamilyStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -26,11 +30,59 @@ const NAV_ITEMS = [
   { href: '/goals', label: '财务目标', icon: Target },
 ];
 
+type ExportState = 'idle' | 'busy' | 'done' | 'error';
+
 export function Sidebar() {
   const pathname = usePathname();
   const sidebarOpen = useFamilyStore((s) => s.sidebarOpen);
   const toggleSidebar = useFamilyStore((s) => s.toggleSidebar);
   const { user } = db.useAuth();
+  const [exportState, setExportState] = useState<ExportState>('idle');
+
+  async function handleExport() {
+    if (!user || exportState === 'busy') return;
+    setExportState('busy');
+    try {
+      const where = { userId: user.id };
+      const result = await db.queryOnce({
+        members: { $: { where } },
+        incomes: { $: { where } },
+        expenses: { $: { where } },
+        deposits: { $: { where } },
+        metals: { $: { where } },
+        securities: { $: { where } },
+        goals: { $: { where } },
+      });
+
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        userId: user.id,
+        userEmail: user.email,
+        data: result.data,
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json',
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const date = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `famfi-backup-${date}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      setExportState('done');
+      setTimeout(() => setExportState('idle'), 2000);
+    } catch (e) {
+      console.error('Export failed:', e);
+      setExportState('error');
+      setTimeout(() => setExportState('idle'), 3000);
+    }
+  }
 
   return (
     <>
@@ -102,20 +154,49 @@ export function Sidebar() {
           })}
         </nav>
 
-        {/* User + Sign out */}
+        {/* User + actions */}
         {user && (
           <div className="px-4 py-3 border-t border-border">
             <div className="flex items-center justify-between gap-2 px-2 py-2 rounded-md hover:bg-surface-elevated transition-colors group">
               <div className="min-w-0">
                 <p className="text-xs text-foreground truncate">{user.email}</p>
               </div>
-              <button
-                onClick={() => db.auth.signOut()}
-                title="退出登录"
-                className="flex-shrink-0 p-1.5 rounded-md text-foreground-secondary hover:text-danger transition-colors"
-              >
-                <LogOut size={14} />
-              </button>
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <button
+                  onClick={handleExport}
+                  disabled={exportState === 'busy'}
+                  title={
+                    exportState === 'done'
+                      ? '已导出'
+                      : exportState === 'error'
+                      ? '导出失败'
+                      : '导出备份 (JSON)'
+                  }
+                  className={cn(
+                    'p-1.5 rounded-md transition-colors disabled:opacity-60',
+                    exportState === 'done'
+                      ? 'text-secondary'
+                      : exportState === 'error'
+                      ? 'text-danger'
+                      : 'text-foreground-secondary hover:text-primary'
+                  )}
+                >
+                  {exportState === 'done' ? (
+                    <Check size={14} />
+                  ) : exportState === 'error' ? (
+                    <AlertCircle size={14} />
+                  ) : (
+                    <Download size={14} className={exportState === 'busy' ? 'animate-pulse' : ''} />
+                  )}
+                </button>
+                <button
+                  onClick={() => db.auth.signOut()}
+                  title="退出登录"
+                  className="p-1.5 rounded-md text-foreground-secondary hover:text-danger transition-colors"
+                >
+                  <LogOut size={14} />
+                </button>
+              </div>
             </div>
           </div>
         )}
