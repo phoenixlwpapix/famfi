@@ -69,6 +69,8 @@ const _schema = i.schema({
       recurring: i.boolean(),
       dayOfMonth: i.number(),
       recurringSourceId: i.string(),
+      startDate: i.string().optional(),
+      endDate: i.string().optional(),
       userId: i.string().optional().indexed(),
     }),
     goals: i.entity({
